@@ -33,6 +33,13 @@ double test_matrix_working_pivot[3][3] = {
 	{1,-1,3}
 };
 
+// Funktioniert nicht und sollte im zweiten Schritt abbrechen
+double test_matrix_notworking_pivot[3][3] = {
+	{2,-4,-6},
+	{-4,8,12},
+	{0,0,3}
+};
+
 /**
  *
  * Aufgabe i.)
@@ -193,4 +200,8 @@ int main(void) {
 	printf("---------- \n");
 	int *s = malloc(sizeof(int) * n);
 	LR(n, makeMatrix(test_matrix_working_pivot), s, 1);
+
+	//Nicht funktionierende Matrix mit Pivotisierung. Sollte beim zweiten Schritt abbrechen.
+	printf("---------- \n");
+	LR(n, makeMatrix(test_matrix_notworking_pivot), s, 1);
 }
