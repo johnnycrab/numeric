@@ -13,31 +13,10 @@
 // LR-Zerlegung von test_matrix sollte L = {{1,0,0},{1,1,0},{3,3,1}}, R = {{1,2,3},{0,-1,-2},{0,0,-2}}
 // 
 int n = 3;
-double test_matrix_working_nopivot[3][3] = {
-	{1.0,2.0,3.0},
-	{1.0,1.0,1.0},
-	{3.0,3.0,1.0}
-};
-
-// Funktioniert nicht und sollte im zweiten Schritt abbrechen
-double test_matrix_not_working_nopivot[3][3] = {
-	{1,2,3},
-	{1,2,3},
-	{0,0,1}
-};
-
-// LR-Zerlegung mit Pivotisierung sollte sein: {{2,-4,-6},{0.5,1,6},{-1,0,-1}} // Testvektor sollte sein: {1,3,2}
-double test_matrix_working_pivot[3][3] = {
-	{2,-4,-6},
-	{-2,4,5},
-	{1,-1,3}
-};
-
-// Funktioniert nicht und sollte im zweiten Schritt abbrechen
-double test_matrix_notworking_pivot[3][3] = {
-	{2,-4,-6},
-	{-4,8,12},
-	{0,0,3}
+double test_matrix[3][3] = {
+	{2.0,1.0,1.0},
+	{4.0,2.0,-1.0},
+	{-1,0.0,7.0}
 };
 
 /**
@@ -46,7 +25,7 @@ double test_matrix_notworking_pivot[3][3] = {
  * 
  */
 
-// Hilfsfunktion, die eine Matrix "schön" ausgibt
+// Hilfsfunktionen, die eine Matrix/Vektor "schön" ausgibt
 void displayMatrix(double **matrix, int n) {
 	printf("\n");
 	for (int i=0; i<n; i++) {
@@ -55,6 +34,14 @@ void displayMatrix(double **matrix, int n) {
 		}
 		printf("\n");
 	}
+}
+
+void displayVector(double *vector, int n) {
+	printf("\n ( ");
+	for (int i=0; i<n; i++) {
+		printf("%5.1f", vector[i]);
+	}
+	printf(" ) \n");
 }
 
 // Hilfsfunktion, die Betrag zurückgibt
@@ -169,6 +156,89 @@ int LR (int n, double **A, int *s, int flag) {
 	return brokeAtStep;
 }
 
+/**
+ *
+ * Aufgabe ii.)
+ * 
+ */
+
+int VwSubs(int n, double **L, double *b) {
+	// erster Eintrag von b bleibt, da wir annehmen können, dass L normiert
+	for (int i=1; i<n; i++) {
+		// i bezeichnet die Zeile. Gehe jetzt die Spalten durch
+		double mem = 0;
+		for (int j=0; j<i; j++) {
+			mem = mem + (b[j] * L[i][j]);
+		}
+		b[i] = b[i] - mem;
+	}
+
+	return 0;
+}
+
+int RwSubs(int n, double **R, double *b) {
+	// ähnlich wie VwSubs, nur von hinten, hehe
+	// wir müssen allerdings den ersten Eintrag berücksichtigen, weil nicht gegeben ist, dass R normiert
+	for (int i=n-1; i>=0; i--) {
+		double mem = 0;
+		for (int j=n-1; j>i; j--) {
+			mem = mem + (R[i][j] * b[j]);
+		}
+		if (R[i][i] == 0) {
+			return 1;
+		}
+		b[i] = (b[i] - mem) / R[i][i];
+	}
+
+	return 0;
+}
+
+/**
+ *
+ * Aufgabe iii.)
+ * 
+ */
+
+int Solve(int n, double **A, double *b, int flag) {
+	// Leeren Permutationsvektor initialisieren
+	int *s = malloc(sizeof(int) * n);
+
+	int lr = LR(n, A, s, flag);
+
+	if (lr > 0) {
+		// abgebrochen bei LR Zerlegung
+		printf("'Solve' abgebrochen bei LR-Zerlegung. Schritt: %d \n", lr);
+	}
+	else {
+		// wenn mit Pivotisierung, dann müssen wir auch die Einträge von b permutieren, mache das mit einem Hilfsvektor
+		if (flag == 1) {
+			double *mem_b = malloc(sizeof(double) * n);
+			for (int i=0; i<n; i++) {
+				mem_b[i] = b[s[i]];
+			}
+			for (int i=0; i<n; i++) {
+				// rüberschieben
+				b[i] = mem_b[i];
+			}
+			free(mem_b);
+		}
+		
+		VwSubs(n, A, b);
+		int err = RwSubs(n, A, b);
+
+		if (err) {
+			printf("Fehler bei RwSubs");
+		}
+		else {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+//-------
+
 // Hilfsfunktion, die aus den oberen hartcodierten 3x3 Testmatrizen dynamische Matrizen macht
 double **makeMatrix(double m[][3]) {
 	double **matrix = malloc(sizeof(double) * 9);
@@ -188,20 +258,16 @@ double **makeMatrix(double m[][3]) {
 //--------
 
 int main(void) {
-	//Funktionierende Matrix ohne Pivotisierung
-	printf("---------- \n");
-	LR(n, makeMatrix(test_matrix_working_nopivot), NULL, 0);
 
-	//Nicht funktionierende Matrix ohne Pivotisierung. Sollte beim zweiten Schritt abbrechen.
-	printf("---------- \n");
-	LR(n, makeMatrix(test_matrix_not_working_nopivot), NULL, 0);
+	double *b = malloc(sizeof(double) * 3);
+	b[0] = 1.0;
+	b[1] = 2.0;
+	b[2] = 3.0;
 
-	//Funktionierende Matrix mit Pivotisierung
-	printf("---------- \n");
-	int *s = malloc(sizeof(int) * n);
-	LR(n, makeMatrix(test_matrix_working_pivot), s, 1);
+	int err = Solve(3, makeMatrix(test_matrix), b, 1);
+	if (!err) {
+		printf("Lösung: \n");
+	}
+	displayVector(b, 3);
 
-	//Nicht funktionierende Matrix mit Pivotisierung. Sollte beim zweiten Schritt abbrechen.
-	printf("---------- \n");
-	LR(n, makeMatrix(test_matrix_notworking_pivot), s, 1);
 }
