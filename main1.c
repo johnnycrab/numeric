@@ -177,7 +177,7 @@ int VwSubs(int n, double **L, double *b) {
 }
 
 int RwSubs(int n, double **R, double *b) {
-	// ähnlich wie VwSubs, nur von hinten, hehe
+	// ähnlich wie VwSubs, nur von hinten
 	// wir müssen allerdings den ersten Eintrag berücksichtigen, weil nicht gegeben ist, dass R normiert
 	for (int i=n-1; i>=0; i--) {
 		double mem = 0;
