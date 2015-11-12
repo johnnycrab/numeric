@@ -239,7 +239,7 @@ int Solve(int n, double **A, double *b, int flag) {
 
 //-------
 
-// Hilfsfunktion, die aus den oberen hartcodierten 3x3 Testmatrizen dynamische Matrizen macht
+// Hilfsfunktion, die aus der oberen hartcodierten 3x3 Testmatrizen dynamische Matrix macht
 double **makeMatrix(double m[][3]) {
 	double **matrix = malloc(sizeof(double) * 9);
 	for (int i=0; i<3;i++) {
