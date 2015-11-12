@@ -8,14 +8,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// Testmatrizen
-// 
-// LR-Zerlegung von test_matrix sollte L = {{1,0,0},{1,1,0},{3,3,1}}, R = {{1,2,3},{0,-1,-2},{0,0,-2}}
-// 
+// Testmatrix
 int n = 3;
 double test_matrix[3][3] = {
 	{2.0,1.0,1.0},
-	{4.0,2.0,-1.0},
+	{4.0,2.0,-1},
 	{-1,0.0,7.0}
 };
 
@@ -78,14 +75,16 @@ int LR (int n, double **A, int *s, int flag) {
 
 	// LR-Zerlegung ohne Pivotisierung
 	if (flag == 0) {
-		for (int k = 0; k < n-1; k++) {
+		for (int k = 0; k < n; k++) {
 			// Diagonalelement ist 0. Breche hier ab.
 			if (A[k][k] == 0) {
 				brokeAtStep = k + 1;
 				break;
 			}
 
-			GaussSpaltenelimination(n, k, A);	
+			if (k < n-1) {
+				GaussSpaltenelimination(n, k, A);	
+			}
 		}
 
 	}
@@ -101,21 +100,22 @@ int LR (int n, double **A, int *s, int flag) {
 
 			for (int i=k+1; i < n; i++) {
 				// Wir suchen jetzt das Pivotelement
-				if (absolute(A[i][k]) > absolute(A[p][k])) {
+				if (absolute(A[k][i]) > absolute(A[k][p])) {
 					p = i;
 				}
 				if (p != k) {
 					// Im Permutationsvektor vertauschen wir jetzt p und k. Merke: Im Permutationsvektor steht an der k-ten Stelle
-					// welche (alte) Zeile jetzt k-te Zeile ist
+					// welche (alte) Spalte jetzt k-te Spalte ist
+					
 					int mem_p = s[p];
 					s[p] = s[k];
 					s[k] = mem_p;
 
-					// Wir vertauschen jetzt die tatsächlichen Zeilen (k und p) in der Matrix
+					// Wir vertauschen jetzt die tatsächlichen Spalten (k und p) in der Matrix
 					for (int j=0; j<n; j++) {
-						double mem = A[k][j];
-						A[k][j] = A[p][j];
-						A[p][j] = mem;
+						double mem = A[j][k];
+						A[j][k] = A[j][p];
+						A[j][p] = mem;
 					}
 				}
 			}
@@ -126,9 +126,12 @@ int LR (int n, double **A, int *s, int flag) {
 				break;
 			}
 			
-			printf("Schritt: %d, Pivotzeile: %d \n", k+1, p+1);
-			// Yo, alles vertauscht, jetzt Standardpivotisierung
+			printf("Schritt: %d, Pivotspalte: %d \n", k+1, p+1);
+			// Yo, alles vertauscht, jetzt Standardeliminierung
 			GaussSpaltenelimination(n, k, A);
+		}
+		if (brokeAtStep == 0 && A[n-1][n-1] == 0) {
+			brokeAtStep = n;
 		}
 	}
 
@@ -210,18 +213,6 @@ int Solve(int n, double **A, double *b, int flag) {
 		printf("'Solve' abgebrochen bei LR-Zerlegung. Schritt: %d \n", lr);
 	}
 	else {
-		// wenn mit Pivotisierung, dann müssen wir auch die Einträge von b permutieren, mache das mit einem Hilfsvektor
-		if (flag == 1) {
-			double *mem_b = malloc(sizeof(double) * n);
-			for (int i=0; i<n; i++) {
-				mem_b[i] = b[s[i]];
-			}
-			for (int i=0; i<n; i++) {
-				// rüberschieben
-				b[i] = mem_b[i];
-			}
-			free(mem_b);
-		}
 		
 		VwSubs(n, A, b);
 		int err = RwSubs(n, A, b);
@@ -230,6 +221,18 @@ int Solve(int n, double **A, double *b, int flag) {
 			printf("Fehler bei RwSubs");
 		}
 		else {
+			// wenn mit Pivotisierung, dann müssen wir auch die Einträge der Lösung gemäß P^-1 permutieren, mache das mit einem Hilfsvektor
+			if (flag == 1) {
+				double *mem_b = malloc(sizeof(double) * n);
+				for (int i=0; i<n; i++) {
+					mem_b[s[i]] = b[i];
+				}
+				for (int i=0; i<n; i++) {
+					// rüberschieben
+					b[i] = mem_b[i];
+				}
+				free(mem_b);
+			}
 			return 0;
 		}
 	}
