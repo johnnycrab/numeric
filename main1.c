@@ -59,7 +59,7 @@ void GaussSpaltenelimination(int n, int k, double **A) {
 		double factor = A[i][k] / A[k][k];
 		A[i][k] = factor;
 
-		// Zeile updaten und schön abziehen alter
+		// Zeile updaten und schön abziehen
 		for (int j = k+1; j<n; j++) {
 			A[i][j] = A[i][j] - (factor * A[k][j]);
 		}
